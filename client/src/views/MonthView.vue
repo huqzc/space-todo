@@ -7,7 +7,16 @@
         <button @click="nextMonth" class="btn btn-outline">下个月 →</button>
         <button @click="goToToday" class="btn btn-primary">今天</button>
       </div>
-      <button @click="openNewTask" class="btn btn-primary">+ 新建任务</button>
+      <div class="header-actions">
+        <button
+          @click="showOverview = !showOverview"
+          class="btn"
+          :class="showOverview ? 'btn-primary' : 'btn-outline'"
+        >
+          {{ showOverview ? '📊 总览模式' : '📋 当前空间' }}
+        </button>
+        <button @click="openNewTask" class="btn btn-primary">+ 新建任务</button>
+      </div>
     </div>
     
     <div class="calendar">
@@ -59,18 +68,27 @@
           v-for="task in getDayTasks(selectedDay)"
           :key="task.id"
           class="task-item"
-          :class="{ completed: task.completed }"
+          :class="{
+            completed: task.completed,
+            'other-space': showOverview && task.spaceId !== taskStore.currentSpaceId
+          }"
         >
           <div class="task-checkbox">
             <input
               type="checkbox"
               :checked="task.completed"
               @change="taskStore.toggleComplete(task.id)"
+              :disabled="showOverview && task.spaceId !== taskStore.currentSpaceId"
             />
           </div>
-          <div class="task-content" @click="editTask(task)">
+          <div class="task-content" @click="isCurrentSpace(task) && editTask(task)">
             <div class="task-header">
-              <h4 class="task-title">{{ task.title }}</h4>
+              <h4 class="task-title">
+                <span v-if="showOverview && task.spaceId !== taskStore.currentSpaceId" class="space-badge">
+                  {{ getSpaceName(task.spaceId) }}
+                </span>
+                {{ task.title }}
+              </h4>
               <span
                 class="priority-badge"
                 :class="`priority-${task.priority}`"
@@ -80,7 +98,7 @@
             </div>
             <p v-if="task.description" class="task-description">{{ task.description }}</p>
           </div>
-          <button @click="editTask(task)" class="btn btn-outline" style="padding: 6px 12px;">编辑</button>
+          <button v-if="isCurrentSpace(task)" @click="editTask(task)" class="btn btn-outline" style="padding: 6px 12px;">编辑</button>
         </div>
         <div v-if="getDayTasks(selectedDay).length === 0" class="empty-state">
           <p>这一天没有任务</p>
@@ -109,6 +127,7 @@ const currentDate = ref(new Date());
 const selectedDay = ref(null);
 const showEditor = ref(false);
 const editingTask = ref(null);
+const showOverview = ref(false);
 
 onMounted(() => {
   // 支持从年视图跳转过来时显示指定月份
@@ -161,7 +180,7 @@ const calendarDays = computed(() => {
 });
 
 const getDayTasks = (date) => {
-  const tasks = taskStore.currentSpaceTasks;
+  const tasks = showOverview.value ? taskStore.getTasks() : taskStore.currentSpaceTasks;
   return tasks.filter(task => {
     if (!task.dueDate) return false;
     const taskDate = new Date(task.dueDate).toISOString().split('T')[0];
@@ -182,6 +201,15 @@ const formatSelectedDay = (dateStr) => {
 const getPriorityText = (priority) => {
   const map = { high: '高', medium: '中', low: '低' };
   return map[priority] || priority;
+};
+
+const isCurrentSpace = (task) => {
+  return task.spaceId === taskStore.currentSpaceId;
+};
+
+const getSpaceName = (spaceId) => {
+  const space = taskStore.getSpaces().find(s => s.id === spaceId);
+  return space ? space.icon + ' ' + space.name : '未知空间';
 };
 
 const previousMonth = () => {
@@ -239,6 +267,11 @@ const handleSave = async (taskData) => {
   margin-bottom: 20px;
   flex-wrap: wrap;
   gap: 16px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .month-nav {
@@ -380,11 +413,37 @@ const handleSave = async (taskData) => {
   opacity: 0.6;
 }
 
+.task-item.other-space {
+  opacity: 0.5;
+  background: var(--bg-color);
+  pointer-events: none;
+}
+
+.task-item.other-space .task-content {
+  cursor: default;
+}
+
+.space-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  margin-right: 8px;
+}
+
 .task-checkbox input {
   width: 18px;
   height: 18px;
   cursor: pointer;
   margin-top: 2px;
+}
+
+.task-checkbox input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .task-content {

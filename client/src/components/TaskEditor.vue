@@ -27,6 +27,15 @@
           />
         </div>
         
+        <div class="form-group">
+          <label>所属空间</label>
+          <select v-model="formData.spaceId" class="select">
+            <option v-for="space in spaces" :key="space.id" :value="space.id">
+              {{ space.icon }} {{ space.name }}
+            </option>
+          </select>
+        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label>截止时间</label>
@@ -36,7 +45,7 @@
               class="input"
             />
           </div>
-          
+
           <div class="form-group">
             <label>优先级</label>
             <select v-model="formData.priority" class="select">
@@ -131,7 +140,8 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, watch, computed } from 'vue';
+import { useTaskStore } from '@/store/taskStore';
 
 const props = defineProps({
   task: {
@@ -142,6 +152,9 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'save']);
 
+const taskStore = useTaskStore();
+const spaces = computed(() => taskStore.getSpaces());
+
 const formData = ref({
   title: '',
   description: '',
@@ -151,7 +164,8 @@ const formData = ref({
   urgent: false,
   started: false,
   completed: false,
-  tags: []
+  tags: [],
+  spaceId: taskStore.currentSpaceId
 });
 
 const tagsInput = ref('');
@@ -165,7 +179,8 @@ const resetForm = () => {
     priority: 'medium',
     important: false,
     urgent: false,
-    tags: []
+    tags: [],
+    spaceId: taskStore.currentSpaceId
   };
   tagsInput.value = '';
 };
@@ -182,7 +197,8 @@ watch(() => props.task, (newTask) => {
       urgent: newTask.urgent || false,
       started: !!newTask.startedAt,
       completed: newTask.completed || false,
-      tags: newTask.tags || []
+      tags: newTask.tags || [],
+      spaceId: newTask.spaceId || taskStore.currentSpaceId
     };
     tagsInput.value = newTask.tags?.join(', ') || '';
   } else {

@@ -2,7 +2,16 @@
   <div class="container">
     <div class="header">
       <h2>四象限任务管理</h2>
-      <button @click="openNewTask" class="btn btn-primary">+ 新建任务</button>
+      <div class="header-actions">
+        <button
+          @click="showOverview = !showOverview"
+          class="btn"
+          :class="showOverview ? 'btn-primary' : 'btn-outline'"
+        >
+          {{ showOverview ? '📊 总览模式' : '📋 当前空间' }}
+        </button>
+        <button @click="openNewTask" class="btn btn-primary">+ 新建任务</button>
+      </div>
     </div>
     
     <div class="quadrant-info">
@@ -31,11 +40,12 @@
             class="quadrant-task"
             :class="{
               completed: task.completed,
-              [`priority-${task.priority}`]: true
+              [`priority-${task.priority}`]: true,
+              'other-space': showOverview && task.spaceId !== taskStore.currentSpaceId
             }"
-            draggable="true"
+            :draggable="isCurrentSpace(task)"
             @dragstart="handleDragStart($event, task)"
-            @click="editTask(task)"
+            @click="isCurrentSpace(task) && editTask(task)"
           >
             <div class="task-checkbox-small">
               <input
@@ -43,10 +53,16 @@
                 :checked="task.completed"
                 @change.stop="taskStore.toggleComplete(task.id)"
                 @click.stop
+                :disabled="showOverview && task.spaceId !== taskStore.currentSpaceId"
               />
             </div>
             <div class="task-content">
-              <div class="task-title-small">{{ task.title }}</div>
+              <div class="task-title-small">
+                <span v-if="showOverview && task.spaceId !== taskStore.currentSpaceId" class="space-badge">
+                  {{ getSpaceName(task.spaceId) }}
+                </span>
+                {{ task.title }}
+              </div>
               <p v-if="task.description" class="task-description-small">
                 {{ task.description.substring(0, 50) }}{{ task.description.length > 50 ? '...' : '' }}
               </p>
@@ -87,6 +103,7 @@ const taskStore = useTaskStore();
 const showEditor = ref(false);
 const editingTask = ref(null);
 const draggedTask = ref(null);
+const showOverview = ref(false);
 
 const quadrants = [
   {
@@ -120,7 +137,7 @@ const quadrants = [
 ];
 
 const getQuadrantTasks = (quadrant) => {
-  const tasks = taskStore.currentSpaceTasks;
+  const tasks = showOverview.value ? taskStore.getTasks() : taskStore.currentSpaceTasks;
   return tasks.filter(task => {
     return task.important === quadrant.important && task.urgent === quadrant.urgent;
   });
@@ -132,6 +149,15 @@ const formatDate = (dateString) => {
     month: 'short',
     day: 'numeric'
   });
+};
+
+const isCurrentSpace = (task) => {
+  return task.spaceId === taskStore.currentSpaceId;
+};
+
+const getSpaceName = (spaceId) => {
+  const space = taskStore.getSpaces().find(s => s.id === spaceId);
+  return space ? space.icon + ' ' + space.name : '未知空间';
 };
 
 const handleDragStart = (event, task) => {
@@ -183,6 +209,11 @@ const handleSave = async (taskData) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
 }
 
 .quadrant-info {
@@ -273,6 +304,33 @@ const handleSave = async (taskData) => {
 }
 
 .quadrant-task.completed {
+  opacity: 0.5;
+}
+
+.quadrant-task.other-space {
+  opacity: 0.5;
+  background: var(--card-bg);
+  cursor: default;
+}
+
+.quadrant-task.other-space:hover {
+  background: var(--card-bg);
+  transform: none;
+}
+
+.space-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 500;
+  margin-right: 6px;
+}
+
+.task-checkbox-small input:disabled {
+  cursor: not-allowed;
   opacity: 0.5;
 }
 
