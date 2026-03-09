@@ -23,13 +23,17 @@ export const useTaskStore = defineStore('tasks', () => {
   
   // 添加任务
   const addTask = async (taskData) => {
+    const now = new Date().toISOString();
     const newTask = {
       id: Date.now().toString(),
       title: taskData.title || '',
       description: taskData.description || '',
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
       dueDate: taskData.dueDate || null,
       completed: false,
+      completedAt: null,
+      startedAt: null,
       priority: taskData.priority || 'medium',
       tags: taskData.tags || [],
       important: taskData.important || false,
@@ -47,7 +51,11 @@ export const useTaskStore = defineStore('tasks', () => {
   const updateTask = async (id, updates) => {
     const index = tasks.value.findIndex(t => t.id === id);
     if (index !== -1) {
-      tasks.value[index] = { ...tasks.value[index], ...updates };
+      tasks.value[index] = { 
+        ...tasks.value[index], 
+        ...updates,
+        updatedAt: new Date().toISOString()
+      };
       // 使用 JSON 序列化来移除 Vue 的响应式代理，避免 IndexedDB 的 DataCloneError
       const rawTask = JSON.parse(JSON.stringify(tasks.value[index]));
       await taskStore.updateTask(rawTask);
@@ -71,7 +79,17 @@ export const useTaskStore = defineStore('tasks', () => {
   const toggleComplete = async (id) => {
     const task = getTaskById(id);
     if (task) {
-      return await updateTask(id, { completed: !task.completed });
+      const now = new Date().toISOString();
+      const updates = { 
+        completed: !task.completed,
+        completedAt: task.completed ? null : now,
+        updatedAt: now
+      };
+      // 如果任务从完成变为未完成，清除 startedAt
+      if (!task.completed && task.startedAt) {
+        updates.startedAt = null;
+      }
+      return await updateTask(id, updates);
     }
   };
   

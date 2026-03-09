@@ -57,7 +57,7 @@
               重要
             </label>
           </div>
-          
+
           <div class="form-group">
             <label>
               <input
@@ -66,6 +66,48 @@
               />
               紧急
             </label>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>
+              <input
+                v-model="formData.started"
+                type="checkbox"
+              />
+              已开始
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input
+                v-model="formData.completed"
+                type="checkbox"
+                :disabled="true"
+              />
+              已完成
+            </label>
+          </div>
+        </div>
+
+        <div v-if="task && task.completedAt" class="task-meta-info">
+          <div class="meta-item">
+            <span class="meta-label">创建时间:</span>
+            <span class="meta-value">{{ formatDateTime(task.createdAt) }}</span>
+          </div>
+          <div v-if="task.updatedAt" class="meta-item">
+            <span class="meta-label">更新时间:</span>
+            <span class="meta-value">{{ formatDateTime(task.updatedAt) }}</span>
+          </div>
+          <div v-if="task.startedAt" class="meta-item">
+            <span class="meta-label">开始时间:</span>
+            <span class="meta-value">{{ formatDateTime(task.startedAt) }}</span>
+          </div>
+          <div v-if="task.completedAt" class="meta-item">
+            <span class="meta-label">完成时间:</span>
+            <span class="meta-value">{{ formatDateTime(task.completedAt) }}</span>
           </div>
         </div>
         
@@ -107,6 +149,8 @@ const formData = ref({
   priority: 'medium',
   important: false,
   urgent: false,
+  started: false,
+  completed: false,
   tags: []
 });
 
@@ -136,6 +180,8 @@ watch(() => props.task, (newTask) => {
       priority: newTask.priority || 'medium',
       important: newTask.important || false,
       urgent: newTask.urgent || false,
+      started: !!newTask.startedAt,
+      completed: newTask.completed || false,
       tags: newTask.tags || []
     };
     tagsInput.value = newTask.tags?.join(', ') || '';
@@ -148,18 +194,41 @@ const close = () => {
   emit('close');
 };
 
+const formatDateTime = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
 const save = () => {
   const tags = tagsInput.value
     .split(',')
     .map(tag => tag.trim())
     .filter(tag => tag.length > 0);
-  
+
+  const now = new Date().toISOString();
   const taskData = {
     ...formData.value,
     tags,
-    dueDate: formData.value.dueDate || null
+    dueDate: formData.value.dueDate || null,
+    startedAt: formData.value.started ? (props.task?.startedAt || now) : null
   };
-  
+
+  // 如果任务已完成，保留原有的 completedAt 或设置为当前时间
+  if (props.task?.completed) {
+    taskData.completedAt = props.task.completedAt || now;
+  } else if (formData.value.completed) {
+    taskData.completedAt = now;
+  } else {
+    taskData.completedAt = null;
+  }
+
   emit('save', taskData);
   resetForm();
 };
@@ -251,5 +320,33 @@ const save = () => {
   margin-top: 24px;
   padding-top: 20px;
   border-top: 1px solid var(--border-color);
+}
+
+.task-meta-info {
+  background: var(--bg-color);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+  border: 1px solid var(--border-color);
+}
+
+.task-meta-info .meta-item {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.task-meta-info .meta-item:last-child {
+  margin-bottom: 0;
+}
+
+.task-meta-info .meta-label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.task-meta-info .meta-value {
+  color: var(--text-primary);
 }
 </style>

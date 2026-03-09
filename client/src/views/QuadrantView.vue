@@ -42,6 +42,7 @@
                 type="checkbox"
                 :checked="task.completed"
                 @change.stop="taskStore.toggleComplete(task.id)"
+                @click.stop
               />
             </div>
             <div class="task-content">
