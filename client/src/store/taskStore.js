@@ -35,9 +35,11 @@ export const useTaskStore = defineStore('tasks', () => {
       important: taskData.important || false,
       urgent: taskData.urgent || false
     };
-    
+
     tasks.value.push(newTask);
-    await taskStore.addTask(newTask);
+    // 使用 JSON 序列化来移除 Vue 的响应式代理，避免 IndexedDB 的 DataCloneError
+    const rawTask = JSON.parse(JSON.stringify(newTask));
+    await taskStore.addTask(rawTask);
     return newTask;
   };
   
@@ -46,7 +48,9 @@ export const useTaskStore = defineStore('tasks', () => {
     const index = tasks.value.findIndex(t => t.id === id);
     if (index !== -1) {
       tasks.value[index] = { ...tasks.value[index], ...updates };
-      await taskStore.updateTask(tasks.value[index]);
+      // 使用 JSON 序列化来移除 Vue 的响应式代理，避免 IndexedDB 的 DataCloneError
+      const rawTask = JSON.parse(JSON.stringify(tasks.value[index]));
+      await taskStore.updateTask(rawTask);
       return tasks.value[index];
     }
     return null;
@@ -74,7 +78,9 @@ export const useTaskStore = defineStore('tasks', () => {
   // 导入任务
   const importTasks = async (importedTasks) => {
     tasks.value = importedTasks;
-    await taskStore.importTasks(importedTasks);
+    // 使用 JSON 序列化来移除 Vue 的响应式代理，避免 IndexedDB 的 DataCloneError
+    const rawTasks = JSON.parse(JSON.stringify(importedTasks));
+    await taskStore.importTasks(rawTasks);
   };
   
   // 计算属性：未完成任务
