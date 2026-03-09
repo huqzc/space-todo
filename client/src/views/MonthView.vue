@@ -161,7 +161,7 @@ const calendarDays = computed(() => {
 });
 
 const getDayTasks = (date) => {
-  const tasks = taskStore.getTasks();
+  const tasks = taskStore.currentSpaceTasks;
   return tasks.filter(task => {
     if (!task.dueDate) return false;
     const taskDate = new Date(task.dueDate).toISOString().split('T')[0];

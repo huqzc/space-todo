@@ -4,8 +4,26 @@
 
 ### 1.1 核心功能
 
+#### 空间管理
+- **创建空间**：支持创建多个独立的任务空间（如工作、学习、生活）
+- **编辑空间**：修改空间的名称、图标和颜色
+- **删除空间**：删除不需要的空间（至少保留一个）
+- **切换空间**：快速在不同空间之间切换
+- **空间持久化**：当前选中的空间会保存到 localStorage
+
+#### 空间字段
+```javascript
+{
+  id: string,              // 唯一标识
+  name: string,            // 空间名称（必填）
+  icon: string,            // 空间图标（emoji）
+  color: string,           // 空间颜色（hex）
+  createdAt: string        // 创建时间（ISO 格式）
+}
+```
+
 #### 任务管理
-- **创建任务**：支持完整的任务信息录入
+- **创建任务**：支持完整的任务信息录入，自动关联到当前空间
 - **编辑任务**：修改任务的所有属性
 - **删除任务**：删除不需要的任务
 - **标记完成**：快速切换任务完成状态
@@ -25,11 +43,19 @@
   priority: 'high' | 'medium' | 'low',  // 优先级
   tags: string[],          // 标签数组
   important: boolean,      // 是否重要
-  urgent: boolean          // 是否紧急
+  urgent: boolean,         // 是否紧急
+  spaceId: string          // 所属空间ID
 }
 ```
 
-### 1.2 时间视图功能
+### 1.2 任务总览功能
+
+- **统计信息**：显示所有空间的任务总数、未完成数、已完成数、完成率
+- **分组展示**：按空间分组显示所有任务
+- **只读模式**：任务以浅透明度、只读形式展示
+- **快速浏览**：便于用户统一查看所有空间的任务情况
+
+### 1.3 时间视图功能
 
 #### 周视图
 - 展示当前一周（周一到周日）
@@ -57,7 +83,7 @@
   - 完成率进度条
 - 点击月份进入对应月视图
 
-### 1.3 四象限视图
+### 1.4 四象限视图
 
 基于艾森豪威尔四象限任务管理法：
 
@@ -76,16 +102,19 @@
 - 自动更新 important/urgent 字段
 - 显示任务数量和详细信息
 
-### 1.4 数据管理功能
+### 1.5 数据管理功能
 
 #### 数据导出
-- 将所有任务导出为 JSON 文件
+- 将所有空间和任务导出为 JSON 文件
 - 文件名包含日期：`todo-backup-YYYY-MM-DD.json`
 - 格式化输出，便于阅读
+- 新格式包含 spaces 和 tasks 两部分
 
 #### 数据导入
-- 从 JSON 文件导入任务
+- 从 JSON 文件导入空间和任务
 - 数据格式校验
+- 支持新格式（包含 spaces 和 tasks）
+- 兼容旧格式（仅包含 tasks 数组）
 - 防止无效数据导入
 - 导入前确认提示
 
@@ -153,7 +182,19 @@ IndexedDB
 
 ## 三、数据结构设计
 
-### 3.1 任务数据模型
+### 3.1 空间数据模型
+
+```typescript
+interface Space {
+  id: string;                    // 唯一标识，使用时间戳生成
+  name: string;                  // 空间名称，必填
+  icon: string;                  // 空间图标（emoji）
+  color: string;                 // 空间颜色（hex格式）
+  createdAt: string;            // 创建时间，ISO 8601 格式
+}
+```
+
+### 3.2 任务数据模型
 
 ```typescript
 interface Task {
@@ -167,37 +208,62 @@ interface Task {
   tags: string[];               // 标签数组
   important: boolean;            // 是否重要（四象限用）
   urgent: boolean;              // 是否紧急（四象限用）
+  spaceId: string;              // 所属空间ID
 }
 ```
 
-### 3.2 IndexedDB 设计
+### 3.3 IndexedDB 设计
 
 **数据库名称**：`TodoDB`
 
-**对象存储**：`tasks`
-- 主键：`id`
-- 索引：
-  - `createdAt`：创建时间索引
-  - `dueDate`：截止时间索引
-  - `completed`：完成状态索引
+**版本**：2（支持空间功能）
 
-### 3.3 导出数据格式
+**对象存储**：
+
+1. `tasks`
+   - 主键：`id`
+   - 索引：
+     - `createdAt`：创建时间索引
+     - `dueDate`：截止时间索引
+     - `completed`：完成状态索引
+     - `spaceId`：空间ID索引（新增）
+
+2. `spaces`（新增）
+   - 主键：`id`
+   - 索引：
+     - `name`：空间名称索引
+     - `createdAt`：创建时间索引
+
+### 3.4 导出数据格式
 
 ```json
-[
-  {
-    "id": "1234567890",
-    "title": "示例任务",
-    "description": "任务描述",
-    "createdAt": "2024-01-01T00:00:00.000Z",
-    "dueDate": "2024-01-15T12:00:00.000Z",
-    "completed": false,
-    "priority": "high",
-    "tags": ["工作", "重要"],
-    "important": true,
-    "urgent": true
-  }
-]
+{
+  "spaces": [
+    {
+      "id": "work",
+      "name": "工作",
+      "icon": "💼",
+      "color": "#3b82f6",
+      "createdAt": "2024-01-01T00:00:00.000Z"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "1234567890",
+      "title": "示例任务",
+      "description": "任务描述",
+      "createdAt": "2024-01-01T00:00:00.000Z",
+      "dueDate": "2024-01-15T12:00:00.000Z",
+      "completed": false,
+      "priority": "high",
+      "tags": ["工作", "重要"],
+      "important": true,
+      "urgent": true,
+      "spaceId": "work"
+    }
+  ],
+  "exportedAt": "2024-01-01T00:00:00.000Z"
+}
 ```
 
 ## 四、API 设计

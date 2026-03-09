@@ -7,9 +7,18 @@
         <button @click="nextWeek" class="btn btn-outline">下一周 →</button>
         <button @click="goToToday" class="btn btn-primary">今天</button>
       </div>
-      <button @click="openNewTask" class="btn btn-primary">+ 新建任务</button>
+      <div class="header-actions">
+        <button 
+          @click="showOverview = !showOverview" 
+          class="btn"
+          :class="showOverview ? 'btn-primary' : 'btn-outline'"
+        >
+          {{ showOverview ? '📊 总览模式' : '📋 当前空间' }}
+        </button>
+        <button @click="openNewTask" class="btn btn-primary">+ 新建任务</button>
+      </div>
     </div>
-    
+
     <div class="week-grid">
       <div
         v-for="day in weekDays"
@@ -25,7 +34,7 @@
           <span class="day-date">{{ day.dateText }}</span>
           <span class="task-count">({{ getDayTasks(day.date).length }})</span>
         </div>
-        
+
         <div class="day-tasks">
           <div
             v-for="task in getDayTasks(day.date)"
@@ -33,21 +42,28 @@
             class="week-task-item"
             :class="{
               completed: task.completed,
-              [`priority-${task.priority}`]: true
+              [`priority-${task.priority}`]: true,
+              'other-space': showOverview && task.spaceId !== taskStore.currentSpaceId
             }"
-            draggable="true"
+            :draggable="isCurrentSpace(task)"
             @dragstart="handleDragStart($event, task)"
-            @click="editTask(task)"
+            @click="isCurrentSpace(task) && editTask(task)"
           >
             <div class="task-checkbox-small">
               <input
                 type="checkbox"
                 :checked="task.completed"
                 @change.stop="taskStore.toggleComplete(task.id)"
+                :disabled="showOverview && task.spaceId !== taskStore.currentSpaceId"
               />
             </div>
             <div class="task-info">
-              <div class="task-title-small">{{ task.title }}</div>
+              <div class="task-title-small">
+                <span v-if="showOverview && task.spaceId !== taskStore.currentSpaceId" class="space-badge-small">
+                  {{ getSpaceIcon(task.spaceId) }}
+                </span>
+                {{ task.title }}
+              </div>
               <div v-if="task.dueDate" class="task-time">
                 {{ formatTime(task.dueDate) }}
               </div>
@@ -76,23 +92,24 @@ const currentWeekStart = ref(new Date());
 const showEditor = ref(false);
 const editingTask = ref(null);
 const draggedTask = ref(null);
+const showOverview = ref(false);
 
 const weekDays = computed(() => {
   const days = [];
   const start = new Date(currentWeekStart.value);
   start.setDate(start.getDate() - start.getDay() + 1); // 周一
-  
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  
+
   for (let i = 0; i < 7; i++) {
     const date = new Date(start);
     date.setDate(start.getDate() + i);
-    
+
     const dateStr = date.toISOString().split('T')[0];
     const dateToday = new Date(date);
     dateToday.setHours(0, 0, 0, 0);
-    
+
     days.push({
       date: dateStr,
       dayName: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][i],
@@ -100,7 +117,7 @@ const weekDays = computed(() => {
       isToday: dateToday.getTime() === today.getTime()
     });
   }
-  
+
   return days;
 });
 
@@ -109,12 +126,12 @@ const weekRangeText = computed(() => {
   const end = weekDays.value[6].date;
   const startDate = new Date(start);
   const endDate = new Date(end);
-  
+
   return `${startDate.getMonth() + 1}月${startDate.getDate()}日 - ${endDate.getMonth() + 1}月${endDate.getDate()}日`;
 });
 
 const getDayTasks = (date) => {
-  const tasks = taskStore.getTasks();
+  const tasks = showOverview.value ? taskStore.getTasks() : taskStore.currentSpaceTasks;
   return tasks
     .filter(task => {
       if (!task.dueDate) return false;
@@ -125,6 +142,15 @@ const getDayTasks = (date) => {
       if (!a.dueDate || !b.dueDate) return 0;
       return new Date(a.dueDate) - new Date(b.dueDate);
     });
+};
+
+const isCurrentSpace = (task) => {
+  return task.spaceId === taskStore.currentSpaceId;
+};
+
+const getSpaceIcon = (spaceId) => {
+  const space = taskStore.getSpaces().find(s => s.id === spaceId);
+  return space ? space.icon : '📁';
 };
 
 const formatTime = (dateString) => {
@@ -203,6 +229,11 @@ const handleSave = async (taskData) => {
   gap: 16px;
 }
 
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
 .week-nav {
   display: flex;
   align-items: center;
@@ -279,6 +310,25 @@ const handleSave = async (taskData) => {
   opacity: 0.5;
 }
 
+/* 其他空间的任务样式 */
+.week-task-item.other-space {
+  opacity: 0.4;
+  background: var(--bg-color);
+  pointer-events: none;
+  cursor: default;
+}
+
+.week-task-item.other-space:hover {
+  transform: none;
+  background: var(--bg-color);
+}
+
+.space-badge-small {
+  display: inline-block;
+  font-size: 11px;
+  margin-right: 4px;
+}
+
 .week-task-item.priority-high {
   border-left-color: var(--danger-color);
 }
@@ -295,6 +345,11 @@ const handleSave = async (taskData) => {
   width: 16px;
   height: 16px;
   cursor: pointer;
+}
+
+.task-checkbox-small input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .task-info {

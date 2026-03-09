@@ -2,9 +2,18 @@
   <div class="container">
     <div class="header">
       <h2>任务列表</h2>
-      <button @click="openNewTask" class="btn btn-primary">+ 新建任务</button>
+      <div class="header-actions">
+        <button 
+          @click="showOverview = !showOverview" 
+          class="btn"
+          :class="showOverview ? 'btn-primary' : 'btn-outline'"
+        >
+          {{ showOverview ? '📊 总览模式' : '📋 当前空间' }}
+        </button>
+        <button @click="openNewTask" class="btn btn-primary">+ 新建任务</button>
+      </div>
     </div>
-    
+
     <div class="filters">
       <input
         v-model="searchQuery"
@@ -35,18 +44,27 @@
         v-for="task in filteredTasks"
         :key="task.id"
         class="task-item"
-        :class="{ completed: task.completed }"
+        :class="{ 
+          completed: task.completed,
+          'other-space': showOverview && task.spaceId !== taskStore.currentSpaceId
+        }"
       >
         <div class="task-checkbox">
           <input
             type="checkbox"
             :checked="task.completed"
             @change="taskStore.toggleComplete(task.id)"
+            :disabled="showOverview && task.spaceId !== taskStore.currentSpaceId"
           />
         </div>
-        <div class="task-content" @click="editTask(task)">
+        <div class="task-content" @click="isCurrentSpace(task) && editTask(task)">
           <div class="task-header">
-            <h3 class="task-title">{{ task.title }}</h3>
+            <h3 class="task-title">
+              <span v-if="showOverview && task.spaceId !== taskStore.currentSpaceId" class="space-badge">
+                {{ getSpaceName(task.spaceId) }}
+              </span>
+              {{ task.title }}
+            </h3>
             <span
               class="priority-badge"
               :class="`priority-${task.priority}`"
@@ -66,12 +84,12 @@
             <span v-if="task.urgent" class="meta-item urgent">⚡ 紧急</span>
           </div>
         </div>
-        <div class="task-actions">
+        <div class="task-actions" v-if="isCurrentSpace(task)">
           <button @click="editTask(task)" class="btn btn-outline" style="padding: 6px 12px;">编辑</button>
           <button @click="deleteTask(task.id)" class="btn btn-danger" style="padding: 6px 12px;">删除</button>
         </div>
       </div>
-      
+
       <div v-if="filteredTasks.length === 0" class="empty-state">
         <p>暂无任务</p>
       </div>
@@ -98,6 +116,7 @@ const filterTag = ref('');
 const sortBy = ref('createdAt');
 const showEditor = ref(false);
 const editingTask = ref(null);
+const showOverview = ref(false);
 
 const allTags = computed(() => {
   const tags = new Set();
@@ -108,8 +127,9 @@ const allTags = computed(() => {
 });
 
 const filteredTasks = computed(() => {
-  let tasks = taskStore.getTasks();
-  
+  // 根据总览模式选择任务源
+  let tasks = showOverview.value ? taskStore.getTasks() : taskStore.currentSpaceTasks;
+
   // 搜索过滤
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
@@ -118,17 +138,17 @@ const filteredTasks = computed(() => {
       task.description?.toLowerCase().includes(query)
     );
   }
-  
+
   // 优先级过滤
   if (filterPriority.value) {
     tasks = tasks.filter(task => task.priority === filterPriority.value);
   }
-  
+
   // 标签过滤
   if (filterTag.value) {
     tasks = tasks.filter(task => task.tags?.includes(filterTag.value));
   }
-  
+
   // 排序
   tasks = [...tasks].sort((a, b) => {
     if (sortBy.value === 'priority') {
@@ -142,9 +162,18 @@ const filteredTasks = computed(() => {
       return new Date(b.createdAt) - new Date(a.createdAt);
     }
   });
-  
+
   return tasks;
 });
+
+const isCurrentSpace = (task) => {
+  return task.spaceId === taskStore.currentSpaceId;
+};
+
+const getSpaceName = (spaceId) => {
+  const space = taskStore.getSpaces().find(s => s.id === spaceId);
+  return space ? space.icon + ' ' + space.name : '未知空间';
+};
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
@@ -199,6 +228,11 @@ const deleteTask = async (id) => {
   margin-bottom: 20px;
 }
 
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
 .filters {
   display: flex;
   gap: 10px;
@@ -236,6 +270,33 @@ const deleteTask = async (id) => {
   text-decoration: line-through;
 }
 
+/* 其他空间的任务样式 */
+.task-item.other-space {
+  opacity: 0.5;
+  background: var(--bg-color);
+  pointer-events: none;
+}
+
+.task-item.other-space .task-content {
+  cursor: default;
+}
+
+.task-item.other-space:hover {
+  transform: none;
+  box-shadow: var(--shadow);
+}
+
+.space-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-right: 8px;
+}
+
 .task-checkbox {
   margin-top: 4px;
 }
@@ -244,6 +305,11 @@ const deleteTask = async (id) => {
   width: 20px;
   height: 20px;
   cursor: pointer;
+}
+
+.task-checkbox input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .task-content {

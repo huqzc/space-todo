@@ -120,7 +120,7 @@ const quadrants = [
 ];
 
 const getQuadrantTasks = (quadrant) => {
-  const tasks = taskStore.getTasks();
+  const tasks = taskStore.currentSpaceTasks;
   return tasks.filter(task => {
     return task.important === quadrant.important && task.urgent === quadrant.urgent;
   });

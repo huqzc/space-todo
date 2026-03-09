@@ -55,25 +55,25 @@ const monthNames = [
 ];
 
 const months = computed(() => {
-  const tasks = taskStore.getTasks();
+  const tasks = taskStore.currentSpaceTasks;
   const yearMonths = [];
-  
+
   for (let i = 0; i < 12; i++) {
     const monthStart = new Date(currentYear.value, i, 1);
     const monthEnd = new Date(currentYear.value, i + 1, 0);
-    
+
     const monthTasks = tasks.filter(task => {
       if (!task.dueDate) return false;
       const taskDate = new Date(task.dueDate);
       return taskDate >= monthStart && taskDate <= monthEnd;
     });
-    
+
     const completedTasks = monthTasks.filter(task => task.completed);
     const taskCount = monthTasks.length;
     const completionRate = taskCount > 0
       ? Math.round((completedTasks.length / taskCount) * 100)
       : 0;
-    
+
     yearMonths.push({
       month: i + 1,
       monthName: monthNames[i],
@@ -82,7 +82,7 @@ const months = computed(() => {
       completionRate
     });
   }
-  
+
   return yearMonths;
 });
 

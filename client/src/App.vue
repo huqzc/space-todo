@@ -3,6 +3,9 @@
     <nav class="navbar">
       <div class="nav-container">
         <h1 class="nav-title">📋 待办事项管理系统</h1>
+        
+        <SpaceSelector />
+        
         <div class="nav-links">
           <router-link to="/" class="nav-link">任务列表</router-link>
           <router-link to="/week" class="nav-link">周视图</router-link>
@@ -10,6 +13,7 @@
           <router-link to="/year" class="nav-link">年视图</router-link>
           <router-link to="/quadrant" class="nav-link">四象限</router-link>
         </div>
+        
         <div class="nav-actions">
           <button @click="exportData" class="btn btn-outline">导出数据</button>
           <label for="import-file" class="btn btn-outline" style="cursor: pointer;">
@@ -33,12 +37,19 @@
 
 <script setup>
 import { useTaskStore } from '@/store/taskStore';
+import SpaceSelector from '@/components/SpaceSelector.vue';
 
 const taskStore = useTaskStore();
 
 const exportData = () => {
   const tasks = taskStore.getTasks();
-  const dataStr = JSON.stringify(tasks, null, 2);
+  const spaces = taskStore.getSpaces();
+  const data = {
+    tasks,
+    spaces,
+    exportedAt: new Date().toISOString()
+  };
+  const dataStr = JSON.stringify(data, null, 2);
   const dataBlob = new Blob([dataStr], { type: 'application/json' });
   const url = URL.createObjectURL(dataBlob);
   const link = document.createElement('a');
@@ -55,28 +66,47 @@ const importData = async (event) => {
   try {
     const text = await file.text();
     const data = JSON.parse(text);
+
+    // 支持新旧格式
+    let tasks = [];
+    let spaces = [];
     
     if (Array.isArray(data)) {
-      // 数据校验
-      const validTasks = data.filter(task => {
-        return task.id && task.title && task.createdAt;
-      });
-      
-      if (validTasks.length > 0) {
-        if (confirm(`确定要导入 ${validTasks.length} 条任务吗？这将覆盖现有数据。`)) {
-          taskStore.importTasks(validTasks);
-          alert('导入成功！');
+      // 旧格式：只有任务数组
+      tasks = data;
+    } else if (data.tasks && data.spaces) {
+      // 新格式：包含任务和空间
+      tasks = data.tasks;
+      spaces = data.spaces;
+    }
+
+    // 数据校验
+    const validTasks = tasks.filter(task => {
+      return task.id && task.title && task.createdAt;
+    });
+
+    if (validTasks.length > 0 || spaces.length > 0) {
+      const message = spaces.length > 0 
+        ? `确定要导入 ${spaces.length} 个空间和 ${validTasks.length} 条任务吗？这将覆盖现有数据。`
+        : `确定要导入 ${validTasks.length} 条任务吗？这将覆盖现有数据。`;
+        
+      if (confirm(message)) {
+        if (spaces.length > 0) {
+          await taskStore.importSpaces(spaces);
         }
-      } else {
-        alert('导入的文件格式不正确或没有有效任务。');
+        if (validTasks.length > 0) {
+          await taskStore.importTasks(validTasks);
+        }
+        alert('导入成功！');
+        location.reload(); // 刷新页面以重新加载数据
       }
     } else {
-      alert('导入的文件格式不正确。');
+      alert('导入的文件格式不正确或没有有效数据。');
     }
   } catch (error) {
     alert('导入失败：' + error.message);
   }
-  
+
   // 重置文件输入
   event.target.value = '';
 };
