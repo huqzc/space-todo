@@ -17,7 +17,7 @@
             开始使用
             <span class="arrow">→</span>
           </button>
-          <a href="https://github.com/yourusername/space-todo" target="_blank" class="btn-secondary">
+          <a href="https://github.com/huqzc/space-todo" target="_blank" class="btn-secondary">
             查看源码
           </a>
         </div>
