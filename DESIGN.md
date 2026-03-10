@@ -470,7 +470,7 @@ const handleDrop = async (event, targetDate) => {
 ## 七、项目目录结构
 
 ```
-cursor-todo/
+space-todo/
 ├── server/                      # 后端服务
 │   └── index.js                # Express 服务器入口
 ├── client/                      # 前端应用

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import HomeView from '../views/HomeView.vue';
 import TaskListView from '../views/TaskListView.vue';
 import WeekView from '../views/WeekView.vue';
 import MonthView from '../views/MonthView.vue';
@@ -8,6 +9,11 @@ import QuadrantView from '../views/QuadrantView.vue';
 const routes = [
   {
     path: '/',
+    name: 'Home',
+    component: HomeView
+  },
+  {
+    path: '/app',
     name: 'TaskList',
     component: TaskListView
   },

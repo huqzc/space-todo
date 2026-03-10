@@ -54,7 +54,7 @@
 ## 📁 项目结构
 
 ```
-cursor-todo/
+space-todo/
 ├── server/
 │   └── index.js              # Express 服务器
 ├── client/

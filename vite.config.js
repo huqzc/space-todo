@@ -6,20 +6,16 @@ import path from 'node:path';
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
-  root: path.resolve(__dirname, 'client'),  // 指定根目录为 client
+  root: path.resolve(__dirname, '.'),
+  base: process.env.NODE_ENV === 'production' ? '/' : '/',
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'client/src')
+      '@': path.resolve(__dirname, 'src')
     }
   },
-  server: {
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3000',
-        changeOrigin: true
-      }
-    }
+  build: {
+    outDir: path.resolve(__dirname, 'dist'),
+    emptyOutDir: true
   }
 });

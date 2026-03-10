@@ -1,13 +1,13 @@
 <template>
   <div id="app">
-    <nav class="navbar">
+    <nav class="navbar" v-if="$route.path !== '/'">
       <div class="nav-container">
         <h1 class="nav-title">📋 待办事项管理系统</h1>
-        
+
         <SpaceSelector />
-        
+
         <div class="nav-links">
-          <router-link to="/" class="nav-link">任务列表</router-link>
+          <router-link to="/app" class="nav-link">任务列表</router-link>
           <router-link to="/week" class="nav-link">周视图</router-link>
           <router-link to="/month" class="nav-link">月视图</router-link>
           <router-link to="/year" class="nav-link">年视图</router-link>
