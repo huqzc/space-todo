@@ -7,7 +7,7 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
   root: path.resolve(__dirname, '.'),
-  base: process.env.NODE_ENV === 'production' ? '/space-todo' : '/',
+  base: process.env.NODE_ENV === 'production' ? '/space-todo/' : '/',
   plugins: [vue()],
   resolve: {
     alias: {
