@@ -66,7 +66,6 @@
         <span class="badge">Vue Router</span>
         <span class="badge">Pinia</span>
         <span class="badge">Vite</span>
-        <span class="badge">Express</span>
         <span class="badge">IndexedDB</span>
       </div>
     </div>

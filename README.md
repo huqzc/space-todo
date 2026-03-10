@@ -37,11 +37,6 @@
 
 ## 🛠️ 技术栈
 
-### 后端
-- Node.js
-- Express
-- CORS
-
 ### 前端
 - Vue 3 (Composition API)
 - Vue Router
@@ -55,31 +50,25 @@
 
 ```
 space-todo/
-├── server/
-│   └── index.js              # Express 服务器
-├── client/
-│   ├── index.html            # HTML 入口
-│   └── src/
-│       ├── main.js           # Vue 应用入口
-│       ├── App.vue           # 根组件
-│       ├── style.css         # 全局样式
-│       ├── components/
-│       │   └── TaskEditor.vue    # 任务编辑器组件
-│       ├── views/
-│       │   ├── TaskListView.vue  # 任务列表视图
-│       │   ├── WeekView.vue      # 周视图
-│       │   ├── MonthView.vue     # 月视图
-│       │   ├── YearView.vue      # 年视图
-│       │   └── QuadrantView.vue  # 四象限视图
-│       ├── store/
-│       │   └── taskStore.js      # Pinia 状态管理
-│       ├── utils/
-│       │   └── taskStore.js      # IndexedDB 数据存储封装
-│       └── router/
-│           └── index.js          # 路由配置
-├── package.json
-├── vite.config.js
-└── README.md
+├── index.html            # HTML 入口
+└── src/
+    ├── main.js           # Vue 应用入口
+    ├── App.vue           # 根组件
+    ├── style.css         # 全局样式
+    ├── components/
+    │   └── TaskEditor.vue    # 任务编辑器组件
+    ├── views/
+    │   ├── TaskListView.vue  # 任务列表视图
+    │   ├── WeekView.vue      # 周视图
+    │   ├── MonthView.vue     # 月视图
+    │   ├── YearView.vue      # 年视图
+    │   └── QuadrantView.vue  # 四象限视图
+    ├── store/
+    │   └── taskStore.js      # Pinia 状态管理
+    ├── utils/
+    │   └── taskStore.js      # IndexedDB 数据存储封装
+    └── router/
+        └── index.js          # 路由配置
 ```
 
 ## 🚀 快速开始
@@ -92,20 +81,8 @@ npm install
 
 ### 开发模式
 
-同时启动前端和后端：
-
 ```bash
 npm run dev
-```
-
-或者分别启动：
-
-```bash
-# 启动后端服务器
-npm run server
-
-# 启动前端开发服务器（新终端）
-npm run client
 ```
 
 ### 构建生产版本

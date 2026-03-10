@@ -14,10 +14,6 @@ npm install
 npm run dev
 ```
 
-这将同时启动：
-- 后端服务器：http://localhost:3000
-- 前端开发服务器：http://localhost:5173
-
 ### 3. 访问应用
 
 在浏览器中打开：http://localhost:5173
@@ -78,8 +74,7 @@ npm run dev
 ## 开发说明
 
 ### 项目结构
-- `server/` - 后端服务器代码
-- `client/src/` - 前端源代码
+- `src/` - 前端源代码
   - `components/` - 可复用组件
   - `views/` - 页面视图
   - `store/` - 状态管理
@@ -96,7 +91,6 @@ npm run dev
 - Vue Router
 - Pinia
 - IndexedDB
-- Node.js + Express
 - Vite
 
 ## 常见问题

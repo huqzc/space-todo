@@ -138,16 +138,6 @@
 │  │  └─────────────────────────┘  │  │
 │  └───────────────────────────────┘  │
 └─────────────────────────────────────┘
-           │
-           │ HTTP (Optional)
-           │
-┌──────────▼──────────────────────────┐
-│      Node.js Server (Express)       │
-│  ┌───────────────────────────────┐  │
-│  │   API Routes                  │  │  │
-│  │   Static File Serving         │  │  │
-│  └───────────────────────────────┘  │
-└─────────────────────────────────────┘
 ```
 
 ### 2.2 技术选型
@@ -157,11 +147,6 @@
 - **Vue Router**：单页应用路由管理
 - **Pinia**：轻量级状态管理
 - **Vite**：快速的前端构建工具
-
-#### 后端
-- **Node.js**：JavaScript 运行时
-- **Express**：Web 框架
-- **CORS**：跨域支持
 
 #### 数据存储
 - **IndexedDB**：浏览器本地数据库，支持大量数据存储
@@ -266,24 +251,9 @@ interface Task {
 }
 ```
 
-## 四、API 设计
+## 四、数据接口设计
 
-### 4.1 后端 API（当前版本主要用于健康检查）
-
-由于使用浏览器本地存储，大部分数据操作在前端完成。
-
-#### GET /api/health
-健康检查接口
-
-**响应**：
-```json
-{
-  "status": "ok",
-  "message": "Todo API Server is running"
-}
-```
-
-### 4.2 前端数据接口（TaskStore）
+### 4.1 前端数据接口（TaskStore）
 
 #### getTasks(): Promise<Task[]>
 获取所有任务
@@ -471,33 +441,25 @@ const handleDrop = async (event, targetDate) => {
 
 ```
 space-todo/
-├── server/                      # 后端服务
-│   └── index.js                # Express 服务器入口
-├── client/                      # 前端应用
-│   ├── index.html              # HTML 入口文件
-│   └── src/
-│       ├── main.js             # Vue 应用入口
-│       ├── App.vue             # 根组件
-│       ├── style.css           # 全局样式
-│       ├── components/         # 可复用组件
-│       │   └── TaskEditor.vue # 任务编辑器
-│       ├── views/              # 页面视图
-│       │   ├── TaskListView.vue
-│       │   ├── WeekView.vue
-│       │   ├── MonthView.vue
-│       │   ├── YearView.vue
-│       │   └── QuadrantView.vue
-│       ├── store/              # Pinia 状态管理
-│       │   └── taskStore.js
-│       ├── utils/              # 工具函数
-│       │   └── taskStore.js    # IndexedDB 封装
-│       └── router/             # 路由配置
-│           └── index.js
-├── package.json                # 项目配置
-├── vite.config.js             # Vite 配置
-├── .gitignore                 # Git 忽略文件
-├── README.md                  # 项目说明
-└── DESIGN.md                  # 设计文档（本文件）
+├── index.html              # HTML 入口文件
+└── src/
+    ├── main.js             # Vue 应用入口
+    ├── App.vue             # 根组件
+    ├── style.css           # 全局样式
+    ├── components/         # 可复用组件
+    │   └── TaskEditor.vue # 任务编辑器
+    ├── views/              # 页面视图
+    │   ├── TaskListView.vue
+    │   ├── WeekView.vue
+    │   ├── MonthView.vue
+    │   ├── YearView.vue
+    │   └── QuadrantView.vue
+    ├── store/              # Pinia 状态管理
+    │   └── taskStore.js
+    ├── utils/              # 工具函数
+    │   └── taskStore.js    # IndexedDB 封装
+    └── router/             # 路由配置
+        └── index.js
 ```
 
 ## 八、用户体验增强建议
@@ -569,11 +531,3 @@ npm run build
 ```
 
 构建产物在 `dist/` 目录，可部署到任何静态文件服务器。
-
-### 10.3 服务器配置
-Express 服务器已配置静态文件服务，可直接使用：
-```bash
-npm run server
-```
-
-访问 `http://localhost:3000` 查看应用。
