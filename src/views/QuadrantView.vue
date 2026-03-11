@@ -4,6 +4,13 @@
       <h2>四象限任务管理</h2>
       <div class="header-actions">
         <button
+          @click="hideCompleted = !hideCompleted"
+          class="btn"
+          :class="hideCompleted ? 'btn-primary' : 'btn-outline'"
+        >
+          {{ hideCompleted ? '✓ 隐藏已完成' : '✓ 显示已完成' }}
+        </button>
+        <button
           @click="showOverview = !showOverview"
           class="btn"
           :class="showOverview ? 'btn-primary' : 'btn-outline'"
@@ -104,6 +111,7 @@ const showEditor = ref(false);
 const editingTask = ref(null);
 const draggedTask = ref(null);
 const showOverview = ref(false);
+const hideCompleted = ref(false);
 
 const quadrants = [
   {
@@ -139,7 +147,9 @@ const quadrants = [
 const getQuadrantTasks = (quadrant) => {
   const tasks = showOverview.value ? taskStore.getTasks() : taskStore.currentSpaceTasks;
   return tasks.filter(task => {
-    return task.important === quadrant.important && task.urgent === quadrant.urgent;
+    if (task.important !== quadrant.important || task.urgent !== quadrant.urgent) return false;
+    if (hideCompleted.value && task.completed) return false;
+    return true;
   });
 };
 
@@ -230,6 +240,7 @@ const handleSave = async (taskData) => {
   grid-template-rows: 1fr 1fr;
   gap: 20px;
   min-height: 600px;
+  max-height: calc(100vh - 280px);
 }
 
 .quadrant {
@@ -239,7 +250,9 @@ const handleSave = async (taskData) => {
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
-  min-height: 400px;
+  min-height: 300px;
+  max-height: calc((100vh - 320px) / 2);
+  overflow: hidden;
 }
 
 .quadrant-1 {
@@ -296,11 +309,12 @@ const handleSave = async (taskData) => {
   align-items: flex-start;
   gap: 12px;
   border-left: 3px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .quadrant-task:hover {
   background: #e9ecef;
-  transform: translateX(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .quadrant-task.completed {
@@ -401,6 +415,93 @@ const handleSave = async (taskData) => {
   .quadrant-grid {
     grid-template-columns: 1fr;
     grid-template-rows: auto;
+    max-height: none;
+  }
+
+  .quadrant {
+    max-height: 400px;
+  }
+}
+
+@media (max-width: 768px) {
+  .quadrant-grid {
+    gap: 16px;
+  }
+
+  .quadrant {
+    max-height: 350px;
+    padding: 16px;
+  }
+
+  .quadrant-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+  }
+
+  .quadrant-header h3 {
+    font-size: 16px;
+  }
+
+  .quadrant-tasks {
+    gap: 8px;
+  }
+
+  .quadrant-task {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .task-title-small {
+    font-size: 14px;
+  }
+
+  .task-description-small {
+    font-size: 12px;
+  }
+
+  .task-meta-small {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .quadrant-grid {
+    gap: 12px;
+  }
+
+  .quadrant {
+    max-height: 300px;
+    padding: 12px;
+  }
+
+  .quadrant-header h3 {
+    font-size: 14px;
+  }
+
+  .task-count {
+    font-size: 12px;
+  }
+
+  .quadrant-task {
+    padding: 8px;
+    gap: 6px;
+  }
+
+  .task-checkbox-small input {
+    width: 16px;
+    height: 16px;
+  }
+
+  .task-title-small {
+    font-size: 13px;
+  }
+
+  .task-description-small {
+    font-size: 11px;
+  }
+
+  .empty-quadrant {
+    padding: 20px 10px;
   }
 }
 </style>

@@ -3,8 +3,15 @@
     <div class="header">
       <h2>任务列表</h2>
       <div class="header-actions">
-        <button 
-          @click="showOverview = !showOverview" 
+        <button
+          @click="hideCompleted = !hideCompleted"
+          class="btn"
+          :class="hideCompleted ? 'btn-primary' : 'btn-outline'"
+        >
+          {{ hideCompleted ? '✓ 隐藏已完成' : '✓ 显示已完成' }}
+        </button>
+        <button
+          @click="showOverview = !showOverview"
           class="btn"
           :class="showOverview ? 'btn-primary' : 'btn-outline'"
         >
@@ -117,6 +124,7 @@ const sortBy = ref('createdAt');
 const showEditor = ref(false);
 const editingTask = ref(null);
 const showOverview = ref(false);
+const hideCompleted = ref(false);
 
 const allTags = computed(() => {
   const tags = new Set();
@@ -129,6 +137,11 @@ const allTags = computed(() => {
 const filteredTasks = computed(() => {
   // 根据总览模式选择任务源
   let tasks = showOverview.value ? taskStore.getTasks() : taskStore.currentSpaceTasks;
+
+  // 隐藏已完成任务
+  if (hideCompleted.value) {
+    tasks = tasks.filter(task => !task.completed);
+  }
 
   // 搜索过滤
   if (searchQuery.value) {

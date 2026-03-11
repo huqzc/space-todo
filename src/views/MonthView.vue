@@ -9,6 +9,13 @@
       </div>
       <div class="header-actions">
         <button
+          @click="hideCompleted = !hideCompleted"
+          class="btn"
+          :class="hideCompleted ? 'btn-primary' : 'btn-outline'"
+        >
+          {{ hideCompleted ? '✓ 隐藏已完成' : '✓ 显示已完成' }}
+        </button>
+        <button
           @click="showOverview = !showOverview"
           class="btn"
           :class="showOverview ? 'btn-primary' : 'btn-outline'"
@@ -128,6 +135,7 @@ const selectedDay = ref(null);
 const showEditor = ref(false);
 const editingTask = ref(null);
 const showOverview = ref(false);
+const hideCompleted = ref(false);
 
 onMounted(() => {
   // 支持从年视图跳转过来时显示指定月份
@@ -184,7 +192,9 @@ const getDayTasks = (date) => {
   return tasks.filter(task => {
     if (!task.dueDate) return false;
     const taskDate = new Date(task.dueDate).toISOString().split('T')[0];
-    return taskDate === date;
+    if (taskDate !== date) return false;
+    if (hideCompleted.value && task.completed) return false;
+    return true;
   });
 };
 

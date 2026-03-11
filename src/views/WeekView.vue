@@ -8,8 +8,15 @@
         <button @click="goToToday" class="btn btn-primary">今天</button>
       </div>
       <div class="header-actions">
-        <button 
-          @click="showOverview = !showOverview" 
+        <button
+          @click="hideCompleted = !hideCompleted"
+          class="btn"
+          :class="hideCompleted ? 'btn-primary' : 'btn-outline'"
+        >
+          {{ hideCompleted ? '✓ 隐藏已完成' : '✓ 显示已完成' }}
+        </button>
+        <button
+          @click="showOverview = !showOverview"
           class="btn"
           :class="showOverview ? 'btn-primary' : 'btn-outline'"
         >
@@ -93,6 +100,7 @@ const showEditor = ref(false);
 const editingTask = ref(null);
 const draggedTask = ref(null);
 const showOverview = ref(false);
+const hideCompleted = ref(false);
 
 const weekDays = computed(() => {
   const days = [];
@@ -136,7 +144,9 @@ const getDayTasks = (date) => {
     .filter(task => {
       if (!task.dueDate) return false;
       const taskDate = new Date(task.dueDate).toISOString().split('T')[0];
-      return taskDate === date;
+      if (taskDate !== date) return false;
+      if (hideCompleted.value && task.completed) return false;
+      return true;
     })
     .sort((a, b) => {
       if (!a.dueDate || !b.dueDate) return 0;
